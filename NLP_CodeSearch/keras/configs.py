@@ -18,6 +18,8 @@ def get_config():
             #vocabulary info
             'vocab_tokens':'vocab.tokens.pkl',
             'vocab_desc':'vocab.desc.pkl',
+            #use data (computing code vectors)
+            'use_codebase':'test_source.txt',
         },               
         'training_params': {           
             'batch_size': 128,
@@ -33,7 +35,7 @@ def get_config():
                 'top1': 0.4,
             },
             'save_every': 1,
-            'reload': 0, #that the model is reloaded from . If reload=0, then train from scratch
+            'reload': 380, #that the model is reloaded from . If reload=0, then train from scratch
         },
 
         'model_params': {

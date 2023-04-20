@@ -27,7 +27,7 @@ from utils import cos_np, normalize, cos_np_for_normalized
 from configs import get_config
 from models import JointEmbeddingModel
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '5'
+os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
 def get_session(gpu_fraction=0.5):
     """
@@ -235,20 +235,6 @@ class CodeSearcher:
                 except ValueError: index=-1
                 if index <= 10: sum=sum+1  
             return sum/float(len(real))
-        def ACC(real,predict):
-            sum=0.0
-            for val in real:
-                try: index=predict.index(val)
-                except ValueError: index=-1
-                if index!=-1: sum=sum+1  
-            return sum/float(len(real))
-        def MAP(real,predict):
-            sum=0.0
-            for id,val in enumerate(real):
-                try: index=predict.index(val)
-                except ValueError: index=-1
-                if index!=-1: sum=sum+(id+1)/float(index+1)
-            return sum/float(len(real))
         def MRR(real,predict):
             sum=0.0
             for val in real:
@@ -256,29 +242,13 @@ class CodeSearcher:
                 except ValueError: index=-1
                 if index!=-1: sum=sum+1.0/float(index+1)
             return sum/float(len(real))
-        def NDCG(real,predict):
-            dcg=0.0
-            idcg=IDCG(len(real))
-            for i,predictItem in enumerate(predict):
-                if predictItem in real:
-                    itemRelevance=1
-                    rank = i+1
-                    dcg+=(math.pow(2,itemRelevance)-1.0)*(math.log(2)/math.log(rank+1))
-            return dcg/float(idcg)
-        def IDCG(n):
-            idcg=0
-            itemRelevance=1
-            for i in range(n):
-                idcg+=(math.pow(2,itemRelevance)-1.0)*(math.log(2)/math.log(i+2))
-            return idcg
-
         #load valid dataset
         if self._eval_sets is None:
             tokens,descs=self.load_valid_data_chunk()
             self._eval_sets=dict()
             self._eval_sets['tokens']=tokens
             self._eval_sets['descs']=descs
-        succrate1,succrate5,succrate10,acc,mrr,map,ndcg=0,0,0,0,0,0,0
+        succrate1,succrate5,succrate10,mrr=0,0,0,0
         data_len=len(self._eval_sets['descs'])
         for i in tqdm(range(data_len)):
             desc=self._eval_sets['descs'][i]#good desc
@@ -295,18 +265,12 @@ class CodeSearcher:
             succrate1+=SUCCRATE1(real,predict_origin)
             succrate5+=SUCCRATE5(real,predict_origin)
             succrate10+=SUCCRATE10(real,predict_origin)
-            acc+=ACC(real,predict)
             mrr+=MRR(real,predict)
-            map+=MAP(real,predict)
-            ndcg+=NDCG(real,predict)
         succrate1 = succrate1 / float(data_len)
         succrate5 = succrate5 / float(data_len)
         succrate10 = succrate10 / float(data_len)                        
-        acc = acc / float(data_len)
         mrr = mrr / float(data_len)
-        map = map / float(data_len)
-        ndcg= ndcg/ float(data_len)
-        print('SuccRate1={},SuccRate5={},SuccRate10={}, ACC={}, MRR={}, MAP={}, nDCG={}'.format(succrate1,succrate5,succrate10,acc,mrr,map,ndcg))
+        print('SuccRate1={},SuccRate5={},SuccRate10={},MRR={}'.format(succrate1,succrate5,succrate10,mrr))
         return succrate1,mrr
     
 
@@ -337,20 +301,6 @@ class CodeSearcher:
                 except ValueError: index=-1
                 if index <= 10: sum=sum+1  
             return sum/float(len(real))
-        def ACC(real,predict):
-            sum=0.0
-            for val in real:
-                try: index=predict.index(val)
-                except ValueError: index=-1
-                if index!=-1: sum=sum+1  
-            return sum/float(len(real))
-        def MAP(real,predict):
-            sum=0.0
-            for id,val in enumerate(real):
-                try: index=predict.index(val)
-                except ValueError: index=-1
-                if index!=-1: sum=sum+(id+1)/float(index+1)
-            return sum/float(len(real))
         def MRR(real,predict):
             sum=0.0
             for val in real:
@@ -358,21 +308,6 @@ class CodeSearcher:
                 except ValueError: index=-1
                 if index!=-1: sum=sum+1.0/float(index+1)
             return sum/float(len(real))
-        def NDCG(real,predict):
-            dcg=0.0
-            idcg=IDCG(len(real))
-            for i,predictItem in enumerate(predict):
-                if predictItem in real:
-                    itemRelevance=1
-                    rank = i+1
-                    dcg+=(math.pow(2,itemRelevance)-1.0)*(math.log(2)/math.log(rank+1))
-            return dcg/float(idcg)
-        def IDCG(n):
-            idcg=0
-            itemRelevance=1
-            for i in range(n):
-                idcg+=(math.pow(2,itemRelevance)-1.0)*(math.log(2)/math.log(i+2))
-            return idcg
 
         #load valid dataset
         if self._eval_sets is None:
@@ -380,7 +315,7 @@ class CodeSearcher:
             self._eval_sets=dict()
             self._eval_sets['tokens']=tokens
             self._eval_sets['descs']=descs
-        succrate1,succrate5,succrate10,acc,mrr,map,ndcg=0,0,0,0,0,0,0
+        succrate1,succrate5,succrate10,mrr=0,0,0,0
         data_len=len(self._eval_sets['descs'])
         f3=open('/data/dengzhongyang/NLP_CodeSearch/keras/results/eval_results_iter.txt','a',encoding='utf-8',errors='ignore')
         for i in tqdm(range(data_len)):
@@ -399,10 +334,7 @@ class CodeSearcher:
             succrate1+=SUCCRATE1(real,predict_origin)
             succrate5+=SUCCRATE5(real,predict_origin)
             succrate10+=SUCCRATE10(real,predict_origin)
-            acc+=ACC(real,predict)
             mrr+=MRR(real,predict)
-            map+=MAP(real,predict)
-            ndcg+=NDCG(real,predict)
             if(i+1)%50==0:
                 f3.write('SuccRate1={},SuccRate5={},SuccRate10={},MRR={}'.format(succrate1/ float(i+1),succrate5/ float(i+1),succrate10/ float(i+1),mrr/ float(i+1))+'\n')
                 f3.flush()
@@ -410,15 +342,30 @@ class CodeSearcher:
         succrate1 = succrate1 / float(data_len)
         succrate5 = succrate5 / float(data_len)
         succrate10 = succrate10 / float(data_len)                        
-        acc = acc / float(data_len)
         mrr = mrr / float(data_len)
-        map = map / float(data_len)
-        ndcg= ndcg/ float(data_len)
-        print('SuccRate1={},SuccRate5={},SuccRate10={}, ACC={}, MRR={}, MAP={}, nDCG={}'.format(succrate1,succrate5,succrate10,acc,mrr,map,ndcg))
+        print('SuccRate1={},SuccRate5={},SuccRate10={}, MRR={}'.format(succrate1,succrate5,succrate10,mrr))
         f2=open('/data/dengzhongyang/NLP_CodeSearch/keras/results/eval_results.txt','a',encoding='utf-8',errors='ignore')
-        f2.write('SuccRate1={},SuccRate5={},SuccRate10={}, ACC={}, MRR={}, MAP={}, nDCG={}'.format(succrate1,succrate5,succrate10,acc,mrr,map,ndcg)+'\n')
+        f2.write('SuccRate1={},SuccRate5={},SuccRate10={}, MRR={}'.format(succrate1,succrate5,succrate10,mrr)+'\n')
         return succrate1,mrr
     
+    def search(self,model,query,n_results=10):
+        tokens = self.load_use_data()
+        print('loading complete')
+        padded_tokens = self.pad(tokens, self.data_params['tokens_len'])
+
+        data_len = len(tokens)
+        desc = self.convert(self.vocab_desc, query)#convert desc sentence to word indices
+        padded_desc = self.pad([desc]*data_len, self.data_params['desc_len'])
+        sims = model.predict([padded_tokens,padded_desc],batch_size=1000).flatten()       
+        codes_out = []
+        sims_out = []
+        negsims = np.negative(sims)
+        maxinds = np.argpartition(negsims, kth=n_results-1)
+        maxinds = maxinds[:n_results]        
+        codes_out = [self._code_base[k] for k in maxinds]
+        sims_out = sims[maxinds]
+
+        return codes_out,sims_out
                  
     def search_thread(self,codes,sims,desc_repr,code_reprs,i,n_results):        
     #1. compute similarity
@@ -487,4 +434,26 @@ if __name__ == '__main__':
         if conf['training_params']['reload']>0:
             codesearcher.load_model_epoch(model, conf['training_params']['reload'])
         codesearcher.eval(model,10)
+
+    elif args.mode=='search':
+        #search code based on a desc
+        if conf['training_params']['reload']>0:
+            codesearcher.load_model_epoch(model, conf['training_params']['reload'])
+        # codesearcher.load_code_reprs()
+        codesearcher.load_codebase()            #把raw code 存至一个list里面
+        while True:
+            try:
+                query = input('Input Query: ')
+                n_results = int(input('How many results? '))
+            except Exception:
+                print("Exception while parsing your input:")
+                traceback.print_exc()
+                break
+            codes,sims=codesearcher.search(model, query, n_results)
+            zipped=zip(codes,sims)
+            zipped=sorted(zipped, reverse=True, key=lambda x:x[1])
+            zipped=codesearcher.postproc(zipped)
+            zipped = list(zipped)[:n_results]
+            results = '\n\n'.join(map(str,zipped)) #combine the result into a returning string
+            print(results)
     K.clear_session()
